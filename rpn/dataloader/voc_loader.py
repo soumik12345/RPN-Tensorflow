@@ -9,7 +9,7 @@ from .data_generator import data_generator
 
 class VOCDataLoader:
 
-    def __init__(self, data_directory: str):
+    def __init__(self, data_directory: str, use_voc_2012: bool = False):
         self.train_data, dataset_info = tfds.load(
             'voc/2007', split='train+validation',
             data_dir=data_directory, with_info=True
@@ -21,13 +21,14 @@ class VOCDataLoader:
         self.total_items_train = dataset_info.splits['train'].num_examples
         self.total_items_train += dataset_info.splits['validation'].num_examples
         self.total_items_val = dataset_info.splits['test'].num_examples
-        train_2012, dataset_info_2012 = tfds.load(
-            'voc/2012', split='train+validation',
-            data_dir=data_directory, with_info=True
-        )
-        self.total_items_train += dataset_info_2012.splits['train'].num_examples
-        self.total_items_train += dataset_info_2012.splits['validation'].num_examples
-        self.train_data = self.train_data.concatenate(train_2012)
+        if use_voc_2012:
+            train_2012, dataset_info_2012 = tfds.load(
+                'voc/2012', split='train+validation',
+                data_dir=data_directory, with_info=True
+            )
+            self.total_items_train += dataset_info_2012.splits['train'].num_examples
+            self.total_items_train += dataset_info_2012.splits['validation'].num_examples
+            self.train_data = self.train_data.concatenate(train_2012)
         self.labels = dataset_info.features['labels'].names
         self.total_labels = len(self.labels) + 1
         self.padding_values = (
