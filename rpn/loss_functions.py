@@ -2,14 +2,17 @@ import tensorflow as tf
 
 
 def regression_loss(y_true, y_pred):
-    loss_fn = tf.keras.losses.Huber(reduction=tf.keras.losses.Reduction.NONE)
-    loss_for_all = loss_fn(y_true, y_pred)
-    loss_for_all = tf.reduce_sum(loss_for_all, axis=-1)
-    pos_cond = tf.reduce_any(tf.not_equal(y_true, tf.constant(0.0)), axis=-1)
-    pos_mask = tf.cast(pos_cond, dtype=tf.float32)
-    loc_loss = tf.reduce_sum(pos_mask * loss_for_all)
-    total_pos_bboxes = tf.maximum(1.0, tf.reduce_sum(pos_mask))
-    return loc_loss / total_pos_bboxes
+    smooth_l1 = tf.keras.losses.Huber(
+        reduction=tf.keras.losses.Reduction.NONE)
+    batch_size = tf.shape(y_pred)[0]
+    t_true = tf.reshape(y_true, [batch_size, -1, 4])
+    t_pred = tf.reshape(y_pred, [batch_size, -1, 4])
+    loss = smooth_l1(t_true, t_pred)
+    valid = tf.math.reduce_any(tf.not_equal(t_true, 0.0), axis=-1)
+    valid = tf.cast(valid, tf.float32)
+    loss = tf.reduce_sum(loss * valid, axis=-1)
+    total_pos_boxes = tf.math.maximum(1.0, tf.reduce_sum(valid, axis=-1))
+    return tf.math.reduce_mean(tf.truediv(loss, total_pos_boxes))
 
 
 def classification_loss(y_true, y_pred):
