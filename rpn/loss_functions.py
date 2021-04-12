@@ -2,7 +2,6 @@ import tensorflow as tf
 
 
 def regression_loss(y_true, y_pred):
-    y_pred = tf.reshape(y_pred, (tf.shape(y_pred)[0], -1, 4))
     loss_fn = tf.losses.Huber(reduction=tf.losses.Reduction.NONE)
     loss_for_all = loss_fn(y_true, y_pred)
     loss_for_all = tf.reduce_sum(loss_for_all, axis=-1)
