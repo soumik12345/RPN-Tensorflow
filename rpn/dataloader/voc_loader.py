@@ -4,6 +4,7 @@ import tensorflow_datasets as tfds
 
 from .commons import preprocess_data
 from .anchors import generate_anchors
+from .data_generator import data_generator
 
 
 class VOCDataLoader:
@@ -36,8 +37,8 @@ class VOCDataLoader:
         )
 
     def configure_datasets(
-            self, image_size: int, batch_size: int,
-            anchor_ratios: List[float], anchor_scales: List[int], feature_map_shape: int):
+            self, image_size: int, batch_size: int, anchor_ratios: List[float],
+            anchor_scales: List[int], variance: List[float], feature_map_shape: int):
         self.train_data = self.train_data.map(
             lambda x: preprocess_data(x, image_size, image_size, apply_augmentation=True))
         self.val_data = self.val_data.map(
@@ -56,3 +57,13 @@ class VOCDataLoader:
             image_size, anchor_ratios,
             anchor_scales, feature_map_shape
         )
+        anchor_count = len(anchor_ratios) * len(anchor_scales)
+        train_generator = data_generator(
+            self.train_data, anchors,
+            feature_map_shape, anchor_count, 128, 128, variance
+        )
+        val_generator = data_generator(
+            self.val_data, anchors,
+            feature_map_shape, anchor_count, 128, 128, variance
+        )
+        return train_generator, val_generator
