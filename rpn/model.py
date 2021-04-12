@@ -16,6 +16,7 @@ class RegionProposalNetwork(tf.keras.Model):
             anchor_count * 4, (1, 1), activation='linear', name='regression_head')
 
     def build_feature_extractor(self):
+        assert self.backbone in ['vgg16', 'vgg19', 'mobilenet_v2']
         if self.backbone == 'vgg16':
             return tf.keras.applications.vgg16.VGG16(
                 include_top=False, weights='imagenet',
