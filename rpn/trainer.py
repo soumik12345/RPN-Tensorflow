@@ -50,6 +50,7 @@ class Trainer:
             print(e)
 
     def build_dataloader(self, data_directory: str, use_voc_2012: bool, batch_size: int):
+        self.batch_size = batch_size
         self.dataloader = VOCDataLoader(
             data_directory=data_directory, use_voc_2012=use_voc_2012)
         self.train_generator, self.val_generator = self.dataloader.configure_datasets(
