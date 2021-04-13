@@ -25,8 +25,7 @@ class Trainer:
         self.anchor_scales = anchor_scales
         self.total_positive_bboxes = total_positive_bboxes
         self.total_negative_bboxes = total_negative_bboxes
-        self.distribute_strategy = None
-        self.get_distribute_strategy()
+        self.gpus = []
         self.variance = variance
         self.dataloader = None
         self.batch_size = 0
@@ -35,17 +34,12 @@ class Trainer:
 
     def get_distribute_strategy(self):
         try:
-            gpus = tf.config.list_physical_devices('GPU')
-            for gpu in gpus:
+            self.gpus = tf.config.list_physical_devices('GPU')
+            if len(self.gpus) == 0:
+                raise ValueError(
+                    'Please don\'t train this on CPU, you will die of old age before its done')
+            for gpu in self.gpus:
                 tf.config.experimental.set_memory_growth(gpu, True)
-            if len(gpus) == 1:
-                self.distribute_strategy = tf.distribute.OneDeviceStrategy(
-                    'GPU:' + gpus[0].name.split(':')[-1]
-                )
-            elif len(gpus) > 1:
-                self.distribute_strategy = tf.distribute.MirroredStrategy(
-                    devices=['GPU:' + gpu.name.split(':')[-1] for gpu in gpus]
-                )
         except Exception as e:
             print(e)
 
@@ -59,20 +53,18 @@ class Trainer:
         )
 
     def build_model(
-            self, backbone: str, learning_rate: float = 1e-5, model_name: str = 'RegionProposalNetwork'):
-        try:
-            with self.distribute_strategy.scope():
-                self.model = build_rpn_model(
-                    self.image_size, len(self.anchor_ratios) * len(self.anchor_scales),
-                    backbone=backbone, model_name=model_name + '_' + backbone.upper()
-                )
-                self.model.compile(
-                    optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
-                    loss=[regression_loss, classification_loss]
-                )
-                self.model.summary()
-        except AttributeError:
-            print('Please don\'t train this on CPU, you will die of old age before its done')
+            self, backbone: str, learning_rate: float = 1e-5,
+            model_name: str = 'RegionProposalNetwork', show_summary: bool = True):
+        self.model = build_rpn_model(
+            self.image_size, len(self.anchor_ratios) * len(self.anchor_scales),
+            backbone=backbone, model_name=model_name + '_' + backbone.upper()
+        )
+        self.model.compile(
+            optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
+            loss=[regression_loss, classification_loss]
+        )
+        if show_summary:
+            self.model.summary()
 
     def train(self, epochs: int, model_checkpoint_path: str, model_name: str = 'RegionProposalNetwork'):
         log_directory = os.path.join('logs', datetime.now().strftime("%Y%m%d-%H%M%S"))
