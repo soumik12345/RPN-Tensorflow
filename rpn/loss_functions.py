@@ -5,10 +5,10 @@ def regression_loss(y_true, y_pred):
     smooth_l1 = tf.keras.losses.Huber(
         reduction=tf.keras.losses.Reduction.NONE)
     batch_size = tf.shape(y_pred)[0]
-    t_true = tf.reshape(y_true, [batch_size, -1, 4])
-    t_pred = tf.reshape(y_pred, [batch_size, -1, 4])
-    loss = smooth_l1(t_true, t_pred)
-    valid = tf.math.reduce_any(tf.not_equal(t_true, 0.0), axis=-1)
+    y_true = tf.reshape(y_true, [batch_size, -1, 4])
+    y_pred = tf.reshape(y_pred, [batch_size, -1, 4])
+    loss = smooth_l1(y_true, y_pred)
+    valid = tf.math.reduce_any(tf.not_equal(y_true, 0.0), axis=-1)
     valid = tf.cast(valid, tf.float32)
     loss = tf.reduce_sum(loss * valid, axis=-1)
     total_pos_boxes = tf.math.maximum(1.0, tf.reduce_sum(valid, axis=-1))

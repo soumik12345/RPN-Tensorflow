@@ -1,3 +1,4 @@
+click~=7.1.2
 matplotlib==3.4.1
 tensorflow==2.5.0rc0
 tensorflow-datasets==4.2.0
