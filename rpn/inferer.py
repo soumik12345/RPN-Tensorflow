@@ -39,6 +39,7 @@ def draw_bboxes(images, bboxes):
     plt.figure()
     for img_with_bb in images_with_bbox:
         plt.imshow(img_with_bb)
+        plt.axis('off')
         plt.show()
 
 
