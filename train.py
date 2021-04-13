@@ -4,6 +4,9 @@ from rpn.trainer import Trainer
 
 
 @click.command()
+@click.option('--wandb_project_name', help='Wandb Project Name')
+@click.option('--wandb_experiment_name', help='Wandb Experiment Name')
+@click.option('--wandb_api_key', help='Wandb API')
 @click.option('--use_voc_2012', is_flag=True, help='Include VOC 2012 Dataset in Training')
 @click.option('--batch_size', default=8, help='Batch Size')
 @click.option('--backbone', default='vgg16', help='Specify the Backbone [vgg16, vgg19 or mobilenet_v2]')

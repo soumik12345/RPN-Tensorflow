@@ -1,7 +1,9 @@
 import os
+import wandb
 import tensorflow as tf
 from typing import List
 from datetime import datetime
+from wandb.keras import WandbCallback
 
 from . import build_rpn_model
 from .dataloader import VOCDataLoader
@@ -43,6 +45,12 @@ class Trainer:
         except Exception as e:
             print(e)
 
+    @staticmethod
+    def init_wandb(project_name, experiment_name, wandb_api_key):
+        if project_name is not None and experiment_name is not None:
+            os.environ['WANDB_API_KEY'] = wandb_api_key
+            wandb.init(project=project_name, name=experiment_name, sync_tensorboard=True)
+
     def build_dataloader(self, data_directory: str, use_voc_2012: bool, batch_size: int):
         self.batch_size = batch_size
         self.dataloader = VOCDataLoader(
@@ -73,7 +81,8 @@ class Trainer:
                 os.path.join(model_checkpoint_path, model_name),
                 monitor='val_loss', save_best_only=True, save_weights_only=True
             ),
-            tf.keras.callbacks.TensorBoard(log_dir=log_directory, histogram_freq=1)
+            tf.keras.callbacks.TensorBoard(log_dir=log_directory, histogram_freq=1),
+            WandbCallback()
         ]
         train_steps_per_epoch = int(self.dataloader.total_items_train // self.batch_size)
         val_steps_per_epoch = int(self.dataloader.total_items_train // self.batch_size)
