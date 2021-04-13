@@ -3,7 +3,7 @@ import tensorflow as tf
 
 def regression_loss(y_true, y_pred):
     smooth_l1 = tf.keras.losses.Huber(
-        reduction=tf.keras.losses.Reduction.SUM_OVER_BATCH_SIZE)
+        reduction=tf.keras.losses.Reduction.NONE)
     batch_size = tf.shape(y_pred)[0]
     y_true = tf.reshape(y_true, [batch_size, -1, 4])
     y_pred = tf.reshape(y_pred, [batch_size, -1, 4])
