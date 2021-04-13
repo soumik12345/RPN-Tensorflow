@@ -61,15 +61,15 @@ class Trainer:
             self, backbone: str, learning_rate: float = 1e-5, model_name: str = 'RegionProposalNetwork'):
         try:
             with self.distribute_strategy.scope():
-                model = build_rpn_model(
+                self.model = build_rpn_model(
                     self.image_size, len(self.anchor_ratios) * len(self.anchor_scales),
                     backbone=backbone, model_name=model_name + '_' + backbone.upper()
                 )
-                model.compile(
+                self.model.compile(
                     optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
                     loss=[regression_loss, classification_loss]
                 )
-                model.summary()
+                self.model.summary()
         except AttributeError:
             print('Please don\'t train this on CPU, you will die of old age before its done')
 
