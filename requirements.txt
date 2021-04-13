@@ -1,5 +1,7 @@
 click~=7.1.2
 matplotlib==3.4.1
+numpy~=1.19.5
+Pillow~=8.2.0
 tensorflow==2.5.0rc0
 tensorflow-datasets==4.2.0
 wandb~=0.10.25

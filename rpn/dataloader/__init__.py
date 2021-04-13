@@ -1,1 +1,2 @@
-from .voc_loader import VOCDataLoader
+from .voc_loader import VOCDataLoader, VOCLoaderTest
+from .anchors import generate_anchors
