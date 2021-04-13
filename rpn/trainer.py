@@ -35,7 +35,7 @@ class Trainer:
         self.model = None
         self.log_directory = ''
 
-    def get_distribute_strategy(self):
+    def set_gpu_memory_growth(self):
         try:
             self.gpus = tf.config.list_physical_devices('GPU')
             if len(self.gpus) == 0:
