@@ -33,6 +33,7 @@ class Trainer:
         self.batch_size = 0
         self.train_generator, self.val_generator = None, None
         self.model = None
+        self.log_directory = ''
 
     def get_distribute_strategy(self):
         try:
@@ -45,8 +46,9 @@ class Trainer:
         except Exception as e:
             print(e)
 
-    @staticmethod
-    def init_wandb(project_name, experiment_name, entity, wandb_api_key):
+    def init_wandb(self, project_name, experiment_name, entity, wandb_api_key):
+        self.log_directory = os.path.join('logs', datetime.now().strftime("%Y%m%d-%H%M%S"))
+        wandb.tensorboard.patch(root_logdir=self.log_directory)
         if project_name is not None and experiment_name is not None:
             os.environ['WANDB_API_KEY'] = wandb_api_key
             wandb.init(
@@ -78,13 +80,15 @@ class Trainer:
             self.model.summary()
 
     def train(self, epochs: int, model_checkpoint_path: str, model_name: str = 'RegionProposalNetwork'):
-        log_directory = os.path.join('logs', datetime.now().strftime("%Y%m%d-%H%M%S"))
+
         callbacks = [
             tf.keras.callbacks.ModelCheckpoint(
                 os.path.join(model_checkpoint_path, model_name),
                 monitor='val_loss', save_best_only=True, save_weights_only=True
             ),
-            tf.keras.callbacks.TensorBoard(log_dir=log_directory, histogram_freq=1),
+            tf.keras.callbacks.TensorBoard(
+                log_dir=self.log_directory, histogram_freq=1
+            ),
             WandbCallback()
         ]
         train_steps_per_epoch = int(self.dataloader.total_items_train // self.batch_size)
