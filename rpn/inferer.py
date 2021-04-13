@@ -2,6 +2,7 @@ import numpy as np
 from PIL import Image
 import tensorflow as tf
 from typing import List
+from matplotlib import pyplot as plt
 
 from . import build_rpn_model
 from .dataloader import generate_anchors, VOCLoaderTest
@@ -30,6 +31,15 @@ def test_data_generator(img_paths, final_height, final_width):
         image = np.array(resized_image)
         image = tf.image.convert_image_dtype(image, tf.float32)
         yield image, tf.constant([[]], dtype=tf.float32), tf.constant([], dtype=tf.int32)
+
+
+def draw_bboxes(images, bboxes):
+    colors = tf.constant([[1, 0, 0, 1]], dtype=tf.float32)
+    images_with_bbox = tf.image.draw_bounding_boxes(images, bboxes, colors)
+    plt.figure()
+    for img_with_bb in images_with_bbox:
+        plt.imshow(img_with_bb)
+        plt.show()
 
 
 class Inferer:
@@ -73,6 +83,7 @@ class Inferer:
         )
         for images, _, _ in test_dataloader:
             bboxes = self._infer(images=images, batch_size=batch_size, variance=variance)
+            draw_bboxes(images=images, bboxes=bboxes)
 
     def infer_from_image(self, image_files: List[str], batch_size: int, variance: List[float]):
         test_data = tf.data.Dataset.from_generator(
@@ -82,3 +93,4 @@ class Inferer:
         )
         for images, _, _ in test_data:
             bboxes = self._infer(images=images, batch_size=batch_size, variance=variance)
+            draw_bboxes(images=images, bboxes=bboxes)
