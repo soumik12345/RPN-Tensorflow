@@ -68,3 +68,27 @@ class VOCDataLoader:
             feature_map_shape, anchor_count, 128, 128, variance
         )
         return train_generator, val_generator
+
+
+class VOCLoaderTest:
+
+    def __init__(self, data_directory: str):
+        self.test_data, dataset_info = tfds.load(
+            'voc/2007', split='test',
+            data_dir=data_directory, with_info=True
+        )
+        self.labels = ['background'] + dataset_info.features['labels'].names
+        self.padding_values = (
+            tf.constant(0, tf.float32),
+            tf.constant(0, tf.float32),
+            tf.constant(-1, tf.int32)
+        )
+
+    def configure_dataset(self, image_size: int, batch_size: int):
+        test_data = self.test_data.map(lambda x: preprocess_data(x, image_size, image_size))
+        test_data = test_data.padded_batch(
+            batch_size, padded_shapes=(
+                [None, None, None], [None, None], [None, ]
+            ), padding_values=self.padding_values
+        )
+        return test_data
