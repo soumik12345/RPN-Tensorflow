@@ -83,7 +83,7 @@ class Trainer:
 
         callbacks = [
             tf.keras.callbacks.ModelCheckpoint(
-                os.path.join(model_checkpoint_path, model_name),
+                os.path.join(model_checkpoint_path, model_name + '.h5'),
                 monitor='val_loss', save_best_only=True, save_weights_only=True
             ),
             tf.keras.callbacks.TensorBoard(
