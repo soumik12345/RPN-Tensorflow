@@ -2,5 +2,6 @@ venv/
 .idea/
 datasets/
 checkpoints/
+.DS_Store
 **pycache**
 **ipynb_checkpoints**

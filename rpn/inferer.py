@@ -24,16 +24,6 @@ def get_bboxes_from_deltas(anchors, deltas):
     return tf.stack([y1, x1, y2, x2], axis=-1)
 
 
-def draw_bboxes(images, bboxes):
-    colors = tf.constant([[1, 0, 0, 1]], dtype=tf.float32)
-    images_with_bbox = tf.image.draw_bounding_boxes(images, bboxes, colors)
-    plt.figure()
-    for img_with_bb in images_with_bbox:
-        plt.imshow(img_with_bb)
-        plt.axis('off')
-        plt.show()
-
-
 class Inferer:
 
     def __init__(
@@ -56,6 +46,7 @@ class Inferer:
             image_size=image_size, anchor_ratios=anchor_ratios,
             anchor_scales=anchor_scales, feature_map_shape=feature_map_shape
         )
+        self.box_colors = tf.constant([[1, 0, 0, 1]], dtype=tf.float32)
 
     def _infer(self, images, batch_size, variance):
         bbox_deltas, labels = self.model.predict_on_batch(images)
@@ -67,6 +58,14 @@ class Inferer:
         selected_bboxes = tf.gather(bboxes, top_indices, batch_dims=1)
         return selected_bboxes, labels
 
+    def _draw_bboxes(self, images, bboxes):
+        images_with_bbox = tf.image.draw_bounding_boxes(images, bboxes, self.box_colors)
+        plt.figure()
+        for img_with_bb in images_with_bbox:
+            plt.imshow(img_with_bb)
+            plt.axis('off')
+            plt.show()
+
     def infer_from_test_dataset(self, data_directory: str, batch_size: int, variance: List[float]):
         test_dataloader = VOCLoaderTest(
             data_directory=data_directory
@@ -75,7 +74,7 @@ class Inferer:
         )
         for images, _, _ in test_dataloader:
             bboxes = self._infer(images=images, batch_size=batch_size, variance=variance)
-            draw_bboxes(images=images, bboxes=bboxes)
+            self._draw_bboxes(images=images, bboxes=bboxes)
 
     def infer_from_image(self, image_file: str, variance: List[float]):
         image = Image.open(image_file)
@@ -84,4 +83,4 @@ class Inferer:
         image = tf.image.convert_image_dtype(image, tf.float32)
         image = tf.expand_dims(image, axis=0)
         bboxes, labels = self._infer(images=image, batch_size=1, variance=variance)
-        draw_bboxes(images=image, bboxes=bboxes)
+        self._draw_bboxes(images=image, bboxes=bboxes)
