@@ -24,15 +24,6 @@ def get_bboxes_from_deltas(anchors, deltas):
     return tf.stack([y1, x1, y2, x2], axis=-1)
 
 
-def test_data_generator(img_paths, final_height, final_width):
-    for image_path in img_paths:
-        image = Image.open(image_path)
-        resized_image = image.resize((final_width, final_height), Image.LANCZOS)
-        image = np.array(resized_image)
-        image = tf.image.convert_image_dtype(image, tf.float32)
-        yield image, tf.constant([[]], dtype=tf.float32), tf.constant([], dtype=tf.int32)
-
-
 def draw_bboxes(images, bboxes):
     colors = tf.constant([[1, 0, 0, 1]], dtype=tf.float32)
     images_with_bbox = tf.image.draw_bounding_boxes(images, bboxes, colors)
@@ -47,7 +38,6 @@ class Inferer:
 
     def __init__(
             self, image_size: int,
-            anchor_count: int,
             anchor_ratios: List[float],
             anchor_scales: List[int],
             feature_map_shape: int,
@@ -56,6 +46,7 @@ class Inferer:
             model_file: str):
 
         self.image_size = image_size
+        anchor_count = len(anchor_ratios) * len(anchor_scales)
         self.model = build_rpn_model(
             image_size=image_size, anchor_count=anchor_count,
             backbone=backbone, model_name=model_name
@@ -74,7 +65,7 @@ class Inferer:
         bboxes = get_bboxes_from_deltas(self.anchors, bbox_deltas)
         _, top_indices = tf.nn.top_k(labels, 10)
         selected_bboxes = tf.gather(bboxes, top_indices, batch_dims=1)
-        return selected_bboxes
+        return selected_bboxes, labels
 
     def infer_from_test_dataset(self, data_directory: str, batch_size: int, variance: List[float]):
         test_dataloader = VOCLoaderTest(
@@ -86,12 +77,11 @@ class Inferer:
             bboxes = self._infer(images=images, batch_size=batch_size, variance=variance)
             draw_bboxes(images=images, bboxes=bboxes)
 
-    def infer_from_image(self, image_files: List[str], batch_size: int, variance: List[float]):
-        test_data = tf.data.Dataset.from_generator(
-            lambda: test_data_generator(
-                image_files, self.image_size, self.image_size
-            ), (tf.float32, tf.float32, tf.int32), ([None, None, None], [None, None], [None, ])
-        )
-        for images, _, _ in test_data:
-            bboxes = self._infer(images=images, batch_size=batch_size, variance=variance)
-            draw_bboxes(images=images, bboxes=bboxes)
+    def infer_from_image(self, image_file: str, variance: List[float]):
+        image = Image.open(image_file)
+        resized_image = image.resize((self.image_size, self.image_size), Image.LANCZOS)
+        image = np.array(resized_image)
+        image = tf.image.convert_image_dtype(image, tf.float32)
+        image = tf.expand_dims(image, axis=0)
+        bboxes, labels = self._infer(images=image, batch_size=1, variance=variance)
+        draw_bboxes(images=image, bboxes=bboxes)
