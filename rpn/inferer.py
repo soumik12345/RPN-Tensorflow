@@ -60,7 +60,7 @@ class Inferer:
 
     def _draw_bboxes(self, images, bboxes):
         images_with_bbox = tf.image.draw_bounding_boxes(images, bboxes, self.box_colors)
-        plt.figure()
+        plt.figure(figsize=(15, 10))
         for img_with_bb in images_with_bbox:
             plt.imshow(img_with_bb)
             plt.axis('off')
